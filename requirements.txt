@@ -4,7 +4,7 @@ garminconnect>=0.3.4,<0.4
 fit-tool==0.9.15
 python-dotenv==1.2.4
 # Senha do MyWhoosh no Windows Credential Manager (nunca no .env)
-keyring>=25
+keyring>=25.7.0
 
 # Testing dependencies
 pytest==9.1.1
