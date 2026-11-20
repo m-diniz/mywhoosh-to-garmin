@@ -1,6 +1,12 @@
-"""Garmin service for handling authentication and activity uploads."""
+"""Garmin service for handling authentication and activity uploads.
+
+Login apenas por token salvo (garminconnect 0.3.x). A senha e o código MFA do
+Garmin nunca passam por aqui: são digitados uma vez em `scripts/login_garmin.py`,
+que grava só o token.
+"""
 
 import logging
+from pathlib import Path
 from typing import Dict, Any, Optional, Union
 from datetime import datetime
 from garminconnect import (
@@ -9,52 +15,61 @@ from garminconnect import (
     GarminConnectTooManyRequestsError,
     GarminConnectConnectionError
 )
-from garth.exc import GarthHTTPError
+
+logging.getLogger("garminconnect").setLevel(logging.CRITICAL)
+
+
+class GarminTokenInvalid(RuntimeError):
+    """Não há token válido. É preciso rodar `python scripts/login_garmin.py`."""
+
+
+def is_rate_limited(error: BaseException) -> bool:
+    """429: o Garmin pediu para parar. Insistir só estende o bloqueio."""
+    if isinstance(error, GarminConnectTooManyRequestsError):
+        return True
+    text = str(error).lower()
+    return "429" in text or "too many" in text
 
 
 class GarminService:
     """Service for interacting with Garmin Connect."""
 
-    def __init__(self, username: str, password: str):
-        """Initialize GarminService with credentials.
+    def __init__(self, tokenstore: Union[str, Path]):
+        """Initialize GarminService with the token folder.
 
         Args:
-            username: Garmin Connect username
-            password: Garmin Connect password
+            tokenstore: Pasta com o token gerado por scripts/login_garmin.py
         """
-        self.username = username
-        self.password = password
-        self.client: Garmin = Garmin(username, password)
+        self.tokenstore = Path(tokenstore).expanduser()
+        self.client: Garmin = Garmin()
         self.logger = logging.getLogger(__name__)
         self._authenticated = False
 
     def authenticate(self) -> None:
-        """Authenticate with Garmin Connect.
+        """Authenticate with Garmin Connect using the saved token.
 
         Raises:
-            GarminConnectAuthenticationError: Invalid credentials
+            GarminTokenInvalid: Sem token, ou token expirado/revogado
             GarminConnectTooManyRequestsError: Rate limit exceeded
-            GarminConnectConnectionError: Network connection issues
-            RuntimeError: Other authentication failures
         """
-        self.logger.info("Logging in to Garmin Connect...")
-
+        self.logger.info("Logging in to Garmin Connect (saved token)...")
+        if not self.tokenstore.exists():
+            raise GarminTokenInvalid(
+                f"Nenhum token do Garmin em '{self.tokenstore}'. "
+                "Rode `python scripts/login_garmin.py` uma vez neste PC."
+            )
         try:
-            self.client.login()
+            self.client.login(str(self.tokenstore))
             self._authenticated = True
             self.logger.info("Successfully authenticated with Garmin Connect")
-        except GarminConnectAuthenticationError:
-            self.logger.exception("Authentication error. Check your credentials.")
-            raise
         except GarminConnectTooManyRequestsError:
-            self.logger.exception("Too many requests. Try again later.")
+            self.logger.error("Garmin limitou as requisições deste IP (429). Tente em algumas horas.")
             raise
-        except GarminConnectConnectionError:
-            self.logger.exception("Connection error. Check your internet connection.")
-            raise
-        except Exception as e:
-            self.logger.exception(f"Failed to login to Garmin Connect: {e}")
-            raise RuntimeError(f"Authentication failed: {e}") from e
+        except (GarminConnectAuthenticationError, GarminConnectConnectionError) as e:
+            raise GarminTokenInvalid(
+                "O token do Garmin expirou ou foi revogado "
+                f"({e}). Rode `python scripts/login_garmin.py` de novo."
+            ) from e
 
     def upload_activity(self, fit_file_path: str) -> Any:
         """Upload a .fit file to Garmin Connect.
@@ -87,6 +102,8 @@ class GarminService:
                 self.logger.info("Treating as success - no duplicate upload needed")
                 return {"status": "skipped", "message": "Activity already exists on Garmin Connect"}
             
+            if is_rate_limited(e):
+                raise
             self.logger.exception(f"Failed to upload activity: {e}")
             raise RuntimeError(f"Upload failed: {e}") from e
 
@@ -181,6 +198,8 @@ class GarminService:
             return False
 
         except Exception as e:
+            if is_rate_limited(e):
+                raise
             self.logger.warning(f"Error checking for duplicates: {e}")
             # Don't block upload if duplicate check fails
             return False

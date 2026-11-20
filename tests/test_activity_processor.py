@@ -1,14 +1,17 @@
-import pytest
 from unittest.mock import MagicMock
 from services.activity_processor import ActivityProcessor
 
+
 def test_activity_processor_init():
-    mock_mywhoosh = MagicMock()
-    mock_fit_file = MagicMock()
-    mock_garmin = MagicMock()
-    
-    ap = ActivityProcessor(mock_mywhoosh, mock_fit_file, mock_garmin)
-    assert isinstance(ap, ActivityProcessor)
-    assert ap.mywhoosh_service == mock_mywhoosh
-    assert ap.fit_file_service == mock_fit_file
-    assert ap.garmin_service == mock_garmin
+    source, fit, garmin = MagicMock(), MagicMock(), MagicMock()
+    ap = ActivityProcessor(source, fit, garmin)
+    assert ap.source_service is source
+    assert ap.fit_file_service is fit
+    assert ap.garmin_service is garmin
+
+
+def test_parse_iso_and_timestamp():
+    ap = ActivityProcessor(MagicMock(), MagicMock(), MagicMock())
+    assert ap._parse_activity_date("2026-11-20T17:16:29").hour == 17
+    assert ap._parse_activity_date(1768039347) is not None
+    assert ap._parse_activity_date("lixo") is None
