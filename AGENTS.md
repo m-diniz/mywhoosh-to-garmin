@@ -44,6 +44,10 @@ anywhere, even after logging out of the devices. It fights the user's own app. D
 - Garmin is only contacted when there is something new.
 - Interactive input (`getpass`) does not work through Claude Code's `!`; open a separate PowerShell window.
 
+## Language
+
+User-facing text (CLI output, logs, notifications, scripts) is in English. Code comments and docstrings are in Portuguese.
+
 ## Exit codes
 
 0 ok · 1 errors · 2 config/intervals key · 3 redo `scripts/login_garmin.py` · 4 Garmin 429

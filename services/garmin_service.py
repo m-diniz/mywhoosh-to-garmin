@@ -55,20 +55,20 @@ class GarminService:
         self.logger.info("Logging in to Garmin Connect (saved token)...")
         if not self.tokenstore.exists():
             raise GarminTokenInvalid(
-                f"Nenhum token do Garmin em '{self.tokenstore}'. "
-                "Rode `python scripts/login_garmin.py` uma vez neste PC."
+                f"No Garmin token in '{self.tokenstore}'. "
+                "Run `python scripts/login_garmin.py` once on this PC."
             )
         try:
             self.client.login(str(self.tokenstore))
             self._authenticated = True
             self.logger.info("Successfully authenticated with Garmin Connect")
         except GarminConnectTooManyRequestsError:
-            self.logger.error("Garmin limitou as requisições deste IP (429). Tente em algumas horas.")
+            self.logger.error("Garmin rate-limited this IP (429). Try again in a few hours.")
             raise
         except (GarminConnectAuthenticationError, GarminConnectConnectionError) as e:
             raise GarminTokenInvalid(
-                "O token do Garmin expirou ou foi revogado "
-                f"({e}). Rode `python scripts/login_garmin.py` de novo."
+                "The Garmin token expired or was revoked "
+                f"({e}). Run `python scripts/login_garmin.py` again."
             ) from e
 
     def upload_activity(self, fit_file_path: str) -> Any:

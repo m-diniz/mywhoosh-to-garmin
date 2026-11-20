@@ -32,8 +32,8 @@ def get_mywhoosh_password(email: str) -> str:
     password = keyring.get_password(KEYRING_SERVICE, email)
     if not password:
         raise CredentialsMissing(
-            f"Senha do MyWhoosh de '{email}' não está no Gerenciador de Credenciais. "
-            "Rode `python main.py --setup` uma vez."
+            f"MyWhoosh password for '{email}' is not in Credential Manager. "
+            "Run `python main.py --setup` once."
         )
     return password
 
@@ -50,8 +50,8 @@ def get_intervals_api_key(athlete_id: str) -> str:
     key = keyring.get_password(KEYRING_SERVICE, _intervals_user(athlete_id))
     if not key:
         raise CredentialsMissing(
-            f"Chave de API do intervals.icu ({athlete_id}) não está no Gerenciador de "
-            "Credenciais. Rode `python main.py --setup` uma vez."
+            f"intervals.icu API key ({athlete_id}) is not in "
+            "Credential Manager. Run `python main.py --setup` once."
         )
     return key
 

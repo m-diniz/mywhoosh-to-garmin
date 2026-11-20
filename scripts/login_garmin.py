@@ -25,11 +25,11 @@ from garminconnect import Garmin  # noqa: E402
 from services.credentials import garmin_tokenstore  # noqa: E402
 
 AVISO_429 = """
-O Garmin respondeu 429 (bloqueio temporário). Isso acontece por excesso de
-tentativas e pode ser disparado pelo IP, não só por senha errada.
-  - espere de 1 a 3 horas sem tentar de novo;
-  - confira email e senha (login errado também conta como tentativa);
-  - se puder, troque de IP (reinicie o roteador ou use o 4G do celular).
+Garmin responded 429 (temporary block). It happens after too many attempts
+and can be triggered by the IP address, not only by a wrong password.
+  - wait 1 to 3 hours before trying again;
+  - double-check email and password (failed logins also count as attempts);
+  - if possible, change IP (restart the router or use your phone's mobile data).
 """
 
 
@@ -40,39 +40,39 @@ def verificar(destino: Path):
         api.login(str(destino))
         nome = api.get_full_name()
     except Exception as exc:  # noqa: BLE001
-        print(f"\nO token não funciona: {exc}")
+        print(f"\nThe token does not work: {exc}")
         if "429" in str(exc):
             print(AVISO_429)
         return None
     if not nome:
-        print("\nO token foi gravado, mas a API não devolveu o perfil.")
+        print("\nThe token was saved, but the API did not return the profile.")
         return None
-    print(f"\nToken válido. Conectado como: {nome}")
+    print(f"\nToken valid. Connected as: {nome}")
     return api
 
 
 def main() -> int:
     load_dotenv(BASE_DIR / ".env")
     destino = garmin_tokenstore()
-    print(f"Token do Garmin em: {destino}")
+    print(f"Garmin token in: {destino}")
 
     if destino.exists():
-        print("Já existe um token. Testando antes de pedir senha...")
+        print("A token already exists. Testing it before asking for the password...")
         if verificar(destino) is not None:
-            print("Nada a fazer: o login já está válido.")
+            print("Nothing to do: the login is already valid.")
             return 0
-        print("Vamos refazer o login.\n")
+        print("Logging in again.\n")
 
-    print("Login no Garmin Connect. Nada disto sai desta máquina além do próprio login.")
+    print("Garmin Connect login. Nothing here leaves this machine except the login itself.")
     email = input("Email: ").strip()
-    senha = getpass("Senha (não aparece na tela): ")
+    senha = getpass("Password (hidden while typing): ")
     destino.parent.mkdir(parents=True, exist_ok=True)
     try:
         api = Garmin(email=email, password=senha,
-                     prompt_mfa=lambda: input("Código MFA: ").strip())
+                     prompt_mfa=lambda: input("MFA code: ").strip())
         api.login(str(destino))
     except Exception as exc:  # noqa: BLE001
-        print(f"\nFalhou: {exc}")
+        print(f"\nFailed: {exc}")
         if "429" in str(exc):
             print(AVISO_429)
         return 1
@@ -80,9 +80,9 @@ def main() -> int:
         del senha
 
     if verificar(destino) is None:
-        print("\nNÃO prossiga até este login funcionar.")
+        print("\nDo NOT continue until this login works.")
         return 1
-    print("A sincronização usa só este token; a senha não foi gravada.")
+    print("The sync uses only this token; the password was not saved.")
     return 0
 
 

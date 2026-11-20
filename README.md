@@ -8,7 +8,7 @@ and they count toward Garmin's Training Effect and training load.
 > [m-diniz](https://github.com/m-diniz) starting 2026-11-20. The changes are listed under
 > [Differences from the original](#differences-from-the-original) and in the git history.
 
-> **Note:** the tool's messages, logs, notifications and code comments are in Portuguese.
+> **Note:** messages, logs and notifications are in English; code comments and docstrings are in Portuguese.
 
 ## How it works
 

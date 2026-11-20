@@ -53,7 +53,7 @@ def test_download_decompresses_gzip(tmp_path):
 
 def test_download_rejects_non_fit():
     svc = svc_with({"/activity/i2/file": (200, b"<gpx>not a fit file</gpx>")})
-    with pytest.raises(RuntimeError, match="não é um FIT"):
+    with pytest.raises(RuntimeError, match="not a FIT"):
         svc.download_activity({"id": "i2"})
 
 

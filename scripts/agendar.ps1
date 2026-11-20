@@ -16,14 +16,14 @@ $Nome = 'MyWhoosh2Garmin'
 
 if ($Remover) {
     Unregister-ScheduledTask -TaskName $Nome -Confirm:$false
-    Write-Output "Tarefa '$Nome' removida."
+    Write-Output "Task '$Nome' removed."
     return
 }
 
 $Projeto = Split-Path -Parent $PSScriptRoot
 # pythonw: sem janela de console piscando a cada execução. O log vai para sync.log.
 $Python = Join-Path $Projeto 'venv\Scripts\pythonw.exe'
-if (-not (Test-Path $Python)) { throw "Não achei $Python. Crie o venv antes (veja o README)." }
+if (-not (Test-Path $Python)) { throw "Could not find $Python. Create the venv first (see README)." }
 
 $Acao = New-ScheduledTaskAction -Execute $Python -Argument '"main.py"' -WorkingDirectory $Projeto
 $Gatilho = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) `
@@ -38,5 +38,5 @@ $Principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interac
 Register-ScheduledTask -TaskName $Nome -Action $Acao -Trigger @($Gatilho, $Logon) `
     -Settings $Config -Principal $Principal -Force | Out-Null
 
-Write-Output "Tarefa '$Nome' criada: a cada $IntervaloMinutos min e no logon."
-Write-Output "Testar agora:  Start-ScheduledTask -TaskName $Nome ; depois veja sync.log"
+Write-Output "Task '$Nome' created: every $IntervaloMinutos min and at logon."
+Write-Output "Test now:  Start-ScheduledTask -TaskName $Nome ; then check sync.log"

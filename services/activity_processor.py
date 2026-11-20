@@ -86,7 +86,7 @@ class ActivityProcessor:
         for activity in activities:
             key = self.activity_key(activity)
             if key is None:
-                self.logger.warning(f"Atividade sem id, ignorada: {activity}")
+                self.logger.warning(f"Activity without id, ignored: {activity}")
                 continue
             if state.is_synced(key):
                 continue
@@ -96,11 +96,11 @@ class ActivityProcessor:
             pending.append((when or datetime.max, key, activity, when))
 
         if not pending:
-            self.logger.info("Nada novo para enviar.")
+            self.logger.info("Nothing new to upload.")
             return stats
 
         pending.sort(key=lambda item: item[0])  # mais antiga primeiro
-        self.logger.info(f"{len(pending)} atividade(s) nova(s) para enviar")
+        self.logger.info(f"{len(pending)} new activity(ies) to upload")
         self.garmin_service.authenticate()
 
         for index, (_, key, activity, when) in enumerate(pending):
@@ -110,7 +110,7 @@ class ActivityProcessor:
             original_file_path = modified_file_path = None
             try:
                 if when is not None and self.garmin_service.check_duplicate_activity(when, name):
-                    self.logger.info("Já está no Garmin; registrado sem novo upload")
+                    self.logger.info("Already on Garmin; recorded without uploading again")
                     state.mark_synced(key, "duplicate")
                     stats['skipped'] += 1
                     continue
@@ -128,13 +128,13 @@ class ActivityProcessor:
                     state.mark_synced(key, "uploaded")
                     stats['synced'] += 1
                     stats['uploaded'].append(name)
-                    self.logger.info("✓ Enviada ao Garmin Connect")
+                    self.logger.info("✓ Uploaded to Garmin Connect")
             except Exception as e:
                 if is_rate_limited(e):
-                    self.logger.warning("Garmin respondeu 429; o restante fica para a próxima execução")
+                    self.logger.warning("Garmin responded 429; the rest is left for the next run")
                     stats['rate_limited'] = True
                     break
-                self.logger.exception(f"✗ Falha ao enviar {key}: {e}")
+                self.logger.exception(f"✗ Failed to upload {key}: {e}")
                 stats['errors'] += 1
             finally:
                 if original_file_path:
@@ -143,7 +143,7 @@ class ActivityProcessor:
                     self.fit_file_service.cleanup_file(modified_file_path)
 
         self.logger.info(
-            f"Resumo: {stats['synced']} enviada(s), {stats['skipped']} já existente(s), "
-            f"{stats['errors']} erro(s)" + (" — interrompido por 429" if stats['rate_limited'] else "")
+            f"Summary: {stats['synced']} uploaded, {stats['skipped']} already present, "
+            f"{stats['errors']} error(s)" + (" — stopped by 429" if stats['rate_limited'] else "")
         )
         return stats

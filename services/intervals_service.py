@@ -47,8 +47,8 @@ class IntervalsService:
         response = self.session.get(f"{API}{path}", params=params or None, timeout=60)
         if response.status_code in (401, 403):
             raise PermissionError(
-                "intervals.icu recusou a chave de API (401/403). "
-                "Gere outra em Settings → Developer Settings e rode `main.py --setup`."
+                "intervals.icu rejected the API key (401/403). "
+                "Generate a new one in Settings → Developer Settings and run `main.py --setup`."
             )
         response.raise_for_status()
         return response
@@ -56,7 +56,7 @@ class IntervalsService:
     def authenticate(self) -> None:
         """Valida a chave lendo o perfil do atleta."""
         data = self._get(f"/athlete/{self.athlete_id}").json()
-        self.logger.info(f"intervals.icu: conectado como {data.get('name') or self.athlete_id}")
+        self.logger.info(f"intervals.icu: connected as {data.get('name') or self.athlete_id}")
 
     @staticmethod
     def activity_source(activity: Dict[str, Any]) -> str:
@@ -84,9 +84,9 @@ class IntervalsService:
                 'raw': a,
             })
         result.sort(key=lambda x: x['date'] or '', reverse=True)
-        self.logger.info(f"intervals.icu: {len(result)} atividade(s) "
-                         f"{'de ' + self.source + ' ' if self.source else ''}"
-                         f"nos últimos {self.lookback_days} dias")
+        self.logger.info(f"intervals.icu: {len(result)} activity(ies) "
+                         f"{'from ' + self.source + ' ' if self.source else ''}"
+                         f"in the last {self.lookback_days} days")
         return result[:limit]
 
     def download_activity(self, activity: Dict[str, Any]) -> str:
@@ -97,12 +97,12 @@ class IntervalsService:
             content = gzip.decompress(content)
         if len(content) < 12 or content[8:12] != b".FIT":
             raise RuntimeError(
-                f"O arquivo original de {activity_id} não é um FIT "
-                f"(cabeçalho {content[:12].hex()})."
+                f"The original file of {activity_id} is not a FIT file "
+                f"(header {content[:12].hex()})."
             )
         path = os.path.join(tempfile.gettempdir(),
                             f"intervals_{activity_id}_{int(time.time())}.fit")
         with open(path, "wb") as f:
             f.write(content)
-        self.logger.info(f"Baixado {len(content):,} bytes de {activity_id}")
+        self.logger.info(f"Downloaded {len(content):,} bytes for {activity_id}")
         return path

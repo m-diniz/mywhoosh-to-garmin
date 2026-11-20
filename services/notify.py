@@ -48,7 +48,7 @@ def toast(title: str, body: str) -> bool:
         )
         return True
     except Exception as e:  # noqa: BLE001
-        log.warning(f"Não consegui mostrar a notificação: {e}")
+        log.warning(f"Could not show the notification: {e}")
         return False
 
 
