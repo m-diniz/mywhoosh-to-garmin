@@ -39,31 +39,71 @@ after logging out of it. In practice it would fight your own app for the session
 
 ## Installation (Windows)
 
-Requirements: Python 3.11+, an [intervals.icu](https://intervals.icu) account (free) and a Garmin Connect account.
+Requirements: Python 3.11+, a MyWhoosh account, an [intervals.icu](https://intervals.icu) account
+(free; created in step 1) and a Garmin Connect account.
+
+### Step 1: connect MyWhoosh to intervals.icu
+
+This part happens on the MyWhoosh and intervals.icu websites; no code is involved.
+
+1. **Create an intervals.icu account** at [intervals.icu](https://intervals.icu) → *Sign up*.
+   Signing up with **email and password** is recommended over "Login with Strava/Garmin", so the
+   account does not depend on another service.
+2. **Do not connect Garmin in intervals.icu.** This tool uploads the ride to Garmin. If intervals.icu
+   is also linked to Garmin, the same ride comes back to intervals.icu as a duplicate.
+3. **Open MyWhoosh's *Connections* page** (your MyWhoosh account settings). It lists the supported
+   services: Strava, TrainingPeaks, intervals.icu and others.
+4. **Click *Connect* under the intervals.icu icon.** It is the red circle with a white heartbeat line.
+   The icons have no labels.
+5. **Sign in with the intervals.icu account from step 1 and authorize MyWhoosh.**
+6. **Confirm it worked:** do a short test ride (a few minutes is enough) and check that it shows up
+   in intervals.icu under *Activities*, usually within a few minutes.
+
+> **Only new rides are sent.** MyWhoosh does not send your history when you connect. To include an
+> older ride, export its FIT file and upload it to intervals.icu manually. The tool also picks up
+> manual uploads, as long as the file came from MyWhoosh and the ride is less than 14 days old.
+
+### Step 2: install the tool
 
 ```powershell
 git clone https://github.com/m-diniz/mywhoosh-to-garmin.git
 cd mywhoosh-to-garmin
 python -m venv venv
 venv\Scripts\pip install -r requirements.txt
-copy .env.example .env      # fill in INTERVALS_ATHLETE_ID
+copy .env.example .env
 ```
 
-1. **MyWhoosh:** Connections → intervals.icu → *Connect*.
-   Do **not** connect Garmin in intervals.icu, or the ride will come back as a duplicate.
-2. **intervals.icu API key** (Settings → Developer Settings → API Key):
-   `venv\Scripts\python.exe main.py --setup`
-3. **Garmin login** (asks for email, password and the MFA code, if enabled):
-   `venv\Scripts\python.exe scripts\login_garmin.py`
-4. **Test:**
-   `venv\Scripts\python.exe main.py --list` shows what intervals.icu has, without uploading anything.
-   `venv\Scripts\python.exe main.py` uploads new activities from the last 14 days.
-5. **Automate** (every 15 min and at Windows logon):
-   `powershell -ExecutionPolicy Bypass -File scripts\agendar.ps1`
-   To remove it: the same command with `-Remover`.
+Edit `.env` and fill in `INTERVALS_ATHLETE_ID`, found in intervals.icu → *Settings* →
+*Developer Settings* (format `i123456`).
 
-> Steps 2 and 3 need keyboard input. Run them in a regular PowerShell window, not in tools that
+### Step 3: credentials (once)
+
+1. **intervals.icu API key:** in *Settings* → *Developer Settings*, click *Generate* next to
+   *API Key*. Then run the command below and paste the key when asked. It is hidden while you
+   type and stored in Windows Credential Manager.
+   `venv\Scripts\python.exe main.py --setup`
+2. **Garmin login** (asks for email, password and the MFA code, if enabled):
+   `venv\Scripts\python.exe scripts\login_garmin.py`
+
+> Both commands need keyboard input. Run them in a regular PowerShell window, not in tools that
 > don't provide an interactive terminal.
+
+### Step 4: test
+
+1. `venv\Scripts\python.exe main.py --list` shows what intervals.icu has, without uploading
+   anything. Your test ride should appear with `filter = yes`.
+2. `venv\Scripts\python.exe main.py` uploads new activities from the last 14 days. Check that the
+   ride shows up in Garmin Connect.
+
+If `--list` is empty, intervals.icu has not received any ride from MyWhoosh yet. Review Step 1, and
+check that `INTERVALS_ATHLETE_ID` matches the account MyWhoosh is connected to. If you connected
+through Strava or Google, you may have ended up in a different intervals.icu account.
+
+### Step 5: automate
+
+Every 15 min and at Windows logon:
+`powershell -ExecutionPolicy Bypass -File scripts\agendar.ps1`
+To remove it: the same command with `-Remover`.
 
 ## Day-to-day use
 
