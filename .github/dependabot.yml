@@ -1,21 +1,27 @@
 version: 2
 
+# Mensal e agrupado: um PR por ecossistema por mês, em vez de vários por dia.
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "monthly"
     labels:
       - "dependencies"
       - "github-actions"
+    groups:
+      github-actions:
+        patterns: ["*"]
 
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "monthly"
     labels:
       - "dependencies"
       - "python"
     allow:
       - dependency-type: "all"
-
+    groups:
+      python:
+        patterns: ["*"]
