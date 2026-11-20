@@ -22,6 +22,12 @@ MyWhoosh ──(official connection)──► intervals.icu ──(this tool, ev
    This is what makes Garmin compute Training Effect, training load and training status.
 4. It uploads the ride to Garmin Connect, avoids duplicates, and shows a Windows notification.
 
+> [!IMPORTANT]
+> **Only new activities are synced automatically.** Only rides completed *after* MyWhoosh is
+> connected to intervals.icu are synced; MyWhoosh does not send your ride history. On top of that,
+> the tool only uploads rides from the last 14 days (`SYNC_MAX_AGE_DAYS`). To bring in an older
+> ride, upload its FIT file to intervals.icu manually (see [Step 1](#step-1-connect-mywhoosh-to-intervalsicu)).
+
 **Why not the MyWhoosh API?** It allows a single session per account and refuses logins
 ("You are already logged in from another device") while the app is logged in on any device, even
 after logging out of it. In practice it would fight your own app for the session.
