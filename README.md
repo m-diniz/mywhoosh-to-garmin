@@ -16,7 +16,7 @@ and they count toward Garmin's Training Effect and training load.
 MyWhoosh ──(official connection)──► intervals.icu ──(this tool, every 15 min)──► Garmin Connect
 ```
 
-1. MyWhoosh sends each ride to intervals.icu (Connections → intervals.icu).
+1. MyWhoosh sends each ride to intervals.icu (*View profile* → *Edit profile* → *Connections* → intervals.icu).
 2. The tool fetches new MyWhoosh activities from intervals.icu and downloads the **original FIT file**.
 3. It changes only the device identification to **Garmin Edge 840**. The data itself is not modified.
    This is what makes Garmin compute Training Effect, training load and training status.
@@ -57,7 +57,7 @@ This part happens on the MyWhoosh and intervals.icu websites; no code is involve
    account does not depend on another service.
 2. **Do not connect Garmin in intervals.icu.** This tool uploads the ride to Garmin. If intervals.icu
    is also linked to Garmin, the same ride comes back to intervals.icu as a duplicate.
-3. **Open MyWhoosh's *Connections* page** (your MyWhoosh account settings). It lists the supported
+3. **Open MyWhoosh's *Connections* page:** *View profile* → *Edit profile* → *Connections*. It lists the supported
    services: Strava, TrainingPeaks, intervals.icu and others.
 4. **Click *Connect* under the intervals.icu icon.** It is the red circle with a white heartbeat line.
    The icons have no labels.
