@@ -1,135 +1,132 @@
 # MyWhoosh → Garmin Connect (via intervals.icu)
 
-Envia automaticamente as suas pedaladas do **MyWhoosh** para o **Garmin Connect**, com potência,
-frequência cardíaca e cadência, contando para Training Effect e carga de treino do Garmin.
+Automatically sends your **MyWhoosh** rides to **Garmin Connect**, with power, heart rate and cadence,
+and they count toward Garmin's Training Effect and training load.
 
-> **Fork modificado** de [marcelorodrigo/mywhoosh-to-garmin](https://github.com/marcelorodrigo/mywhoosh-to-garmin),
-> de Marcelo Rodrigo, distribuído sob a mesma licença **GPL-3.0**. Modificado por [m-diniz](https://github.com/m-diniz) a partir de
-> 2026-11-20. As mudanças estão listadas em [Diferenças em relação ao original](#diferenças-em-relação-ao-original)
-> e no histórico do git.
+> **Modified fork** of [marcelorodrigo/mywhoosh-to-garmin](https://github.com/marcelorodrigo/mywhoosh-to-garmin)
+> by Marcelo Rodrigo, distributed under the same **GPL-3.0** license. Modified by
+> [m-diniz](https://github.com/m-diniz) starting 2026-11-20. The changes are listed under
+> [Differences from the original](#differences-from-the-original) and in the git history.
 
-*English summary: automatic MyWhoosh → Garmin Connect sync for Windows. Rides are fetched from
-intervals.icu (MyWhoosh's official integration) instead of the MyWhoosh API, Garmin login is
-token-based with MFA support, and no password is stored on disk. Modified fork of
-marcelorodrigo/mywhoosh-to-garmin, GPL-3.0.*
+> **Note:** the tool's messages, logs, notifications and code comments are in Portuguese.
 
-## Como funciona
+## How it works
 
 ```
-MyWhoosh ──(conexão oficial)──► intervals.icu ──(esta ferramenta, a cada 15 min)──► Garmin Connect
+MyWhoosh ──(official connection)──► intervals.icu ──(this tool, every 15 min)──► Garmin Connect
 ```
 
-1. O MyWhoosh envia cada pedalada para o intervals.icu (Connections → intervals.icu).
-2. A ferramenta busca no intervals.icu as atividades novas vindas do MyWhoosh e baixa o **arquivo FIT original**.
-3. Ajusta só a identificação do dispositivo para **Garmin Edge 840**. Os dados não são alterados.
-   É isso que faz o Garmin calcular Training Effect, carga e status de treino.
-4. Envia ao Garmin Connect, sem duplicar, e avisa por notificação do Windows.
+1. MyWhoosh sends each ride to intervals.icu (Connections → intervals.icu).
+2. The tool fetches new MyWhoosh activities from intervals.icu and downloads the **original FIT file**.
+3. It changes only the device identification to **Garmin Edge 840**. The data itself is not modified.
+   This is what makes Garmin compute Training Effect, training load and training status.
+4. It uploads the ride to Garmin Connect, avoids duplicates, and shows a Windows notification.
 
-**Por que não a API do MyWhoosh?** Ela aceita uma sessão por conta e recusa o login
-("You are already logged in from another device") enquanto o app estiver logado em algum aparelho,
-mesmo depois de sair da conta. Na prática, disputaria a sessão com o seu próprio app.
+**Why not the MyWhoosh API?** It allows a single session per account and refuses logins
+("You are already logged in from another device") while the app is logged in on any device, even
+after logging out of it. In practice it would fight your own app for the session.
 
-## Segurança
+## Security
 
-| Segredo | Onde fica |
+| Secret | Where it lives |
 |---|---|
-| Chave de API do intervals.icu | Gerenciador de Credenciais do Windows (`keyring`). Revogável no intervals.icu. |
-| Senha e MFA do Garmin | Não são gravados. São digitados uma vez, e só o token fica em `~/.garminconnect-mywhoosh`. |
-| Senha do MyWhoosh | Não é usada. |
+| intervals.icu API key | Windows Credential Manager (`keyring`). Revocable in intervals.icu. |
+| Garmin password and MFA code | Never stored. Typed once; only the token is kept, in `~/.garminconnect-mywhoosh`. |
+| MyWhoosh password | Not used. |
 
-O `.env` só tem dados que não são segredo, como o Athlete ID. `.env`, `state.json`, `.alerts.json`
-e `sync.log` ficam fora do git.
+`.env` holds only non-secret settings, such as the Athlete ID. `.env`, `state.json`,
+`.alerts.json` and `sync.log` are git-ignored.
 
-## Instalação (Windows)
+## Installation (Windows)
 
-Requisitos: Python 3.11+, uma conta no [intervals.icu](https://intervals.icu) (grátis) e uma conta Garmin Connect.
+Requirements: Python 3.11+, an [intervals.icu](https://intervals.icu) account (free) and a Garmin Connect account.
 
 ```powershell
 git clone https://github.com/m-diniz/mywhoosh-to-garmin.git
 cd mywhoosh-to-garmin
 python -m venv venv
 venv\Scripts\pip install -r requirements.txt
-copy .env.example .env      # preencha INTERVALS_ATHLETE_ID
+copy .env.example .env      # fill in INTERVALS_ATHLETE_ID
 ```
 
 1. **MyWhoosh:** Connections → intervals.icu → *Connect*.
-   No intervals.icu, **não** ligue o Garmin, senão a atividade volta duplicada.
-2. **Chave do intervals.icu** (Settings → Developer Settings → API Key):
+   Do **not** connect Garmin in intervals.icu, or the ride will come back as a duplicate.
+2. **intervals.icu API key** (Settings → Developer Settings → API Key):
    `venv\Scripts\python.exe main.py --setup`
-3. **Login no Garmin** (pede e-mail, senha e o código MFA, se houver):
+3. **Garmin login** (asks for email, password and the MFA code, if enabled):
    `venv\Scripts\python.exe scripts\login_garmin.py`
-4. **Teste:**
-   `venv\Scripts\python.exe main.py --list` mostra o que há no intervals.icu e não envia nada.
-   `venv\Scripts\python.exe main.py` envia as atividades novas dos últimos 14 dias.
-5. **Automatize** (a cada 15 min e no logon do Windows):
+4. **Test:**
+   `venv\Scripts\python.exe main.py --list` shows what intervals.icu has, without uploading anything.
+   `venv\Scripts\python.exe main.py` uploads new activities from the last 14 days.
+5. **Automate** (every 15 min and at Windows logon):
    `powershell -ExecutionPolicy Bypass -File scripts\agendar.ps1`
-   Para remover: o mesmo comando com `-Remover`.
+   To remove it: the same command with `-Remover`.
 
-> Os passos 2 e 3 pedem digitação. Rode-os num PowerShell normal, não em ferramentas
-> que não oferecem um terminal interativo.
+> Steps 2 and 3 need keyboard input. Run them in a regular PowerShell window, not in tools that
+> don't provide an interactive terminal.
 
-## Uso no dia a dia
+## Day-to-day use
 
-Não há nada a fazer: pedale, e a atividade aparece no Garmin em até ~20 minutos.
+Nothing to do: ride, and the activity shows up on Garmin within about 20 minutes.
 
-- **Notificações:** a ferramenta avisa quando uma pedalada é enviada. Avisa também quando algo precisa de você:
-  token do Garmin vencido ou chave do intervals.icu recusada. Falhas passageiras, como rede ou serviço fora do ar,
-  só geram aviso se durarem mais de 1 hora. Cada problema é avisado uma vez só.
-- **Log:** `sync.log`, com rotação automática.
-- **Sem duplicatas:** `state.json` guarda o que já foi enviado. A ferramenta também verifica se o Garmin já
-  tem uma atividade no mesmo horário.
+- **Notifications:** the tool tells you when a ride is uploaded. It also tells you when it needs you:
+  an expired Garmin token or a rejected intervals.icu key. Transient failures, such as network or
+  service outages, only trigger an alert if they last more than 1 hour. Each problem is reported only once.
+- **Log:** `sync.log`, with automatic rotation.
+- **No duplicates:** `state.json` records what has already been uploaded. The tool also checks
+  whether Garmin already has an activity at the same time.
 
-| Código de saída | Significado |
+| Exit code | Meaning |
 |---|---|
 | 0 | ok |
-| 1 | falha ao enviar (tenta de novo na próxima execução) |
-| 2 | configuração ou chave do intervals.icu |
-| 3 | refazer `scripts\login_garmin.py` |
-| 4 | o Garmin limitou as requisições (429); tenta de novo sozinho |
+| 1 | upload failed (retried on the next run) |
+| 2 | configuration or intervals.icu key problem |
+| 3 | run `scripts\login_garmin.py` again |
+| 4 | Garmin rate-limited the requests (429); retried automatically |
 
-### Configurações opcionais (`.env`)
+### Optional settings (`.env`)
 
-| Variável | Padrão | Uso |
+| Variable | Default | Purpose |
 |---|---|---|
-| `INTERVALS_SOURCE` | `MYWHOOSH` | Envia só atividades cuja origem/dispositivo contém este texto (`ALL` = todas) |
-| `SYNC_MAX_AGE_DAYS` | `14` | Ignora atividades mais antigas |
-| `SYNC_LIMIT` | `20` | Máximo de atividades consideradas por execução |
-| `GARMIN_TOKENSTORE` | `~/.garminconnect-mywhoosh` | Pasta do token do Garmin |
-| `LOG_LEVEL` | `INFO` | Nível de log |
+| `INTERVALS_SOURCE` | `MYWHOOSH` | Upload only activities whose source/device contains this text (`ALL` = everything) |
+| `SYNC_MAX_AGE_DAYS` | `14` | Ignore older activities |
+| `SYNC_LIMIT` | `20` | Maximum activities considered per run |
+| `GARMIN_TOKENSTORE` | `~/.garminconnect-mywhoosh` | Garmin token folder |
+| `LOG_LEVEL` | `INFO` | Log level |
 
-O dispositivo simulado (Edge 840: fabricante 1, produto 4024, software 20.19) pode ser trocado em
+The emulated device (Edge 840: manufacturer 1, product 4024, software 20.19) can be changed in
 `services/fit_file_service.py`.
 
-## Desenvolvimento
+## Development
 
 ```powershell
 venv\Scripts\python.exe -m pytest -q
 ```
 
-A arquitetura e as regras do projeto estão em [AGENTS.md](AGENTS.md).
+Architecture and project rules are described in [AGENTS.md](AGENTS.md).
 
-## Diferenças em relação ao original
+## Differences from the original
 
-Em relação a [marcelorodrigo/mywhoosh-to-garmin](https://github.com/marcelorodrigo/mywhoosh-to-garmin):
+Compared with [marcelorodrigo/mywhoosh-to-garmin](https://github.com/marcelorodrigo/mywhoosh-to-garmin):
 
-- **Origem:** intervals.icu no lugar da API do MyWhoosh, por causa do limite de uma sessão por conta.
-  O cliente da API do MyWhoosh e o cliente Zwift, que não era usado, foram removidos.
-- **Login do Garmin:** `garminconnect` 0.3.x, só por token, com suporte a MFA. O fluxo antigo
-  baseado no `garth` deixou de funcionar.
-- **Credenciais:** nenhuma senha no `.env`. A chave fica no keyring do sistema.
-- **Sincronização:** envia todas as atividades novas, não só a última. Usa `state.json`, pausa entre
-  envios e para quando o Garmin responde 429.
-- **Windows:** tarefa agendada, notificações e log com rotação.
-- O que foi mantido do original: o ajuste do FIT para Garmin Edge 840 (`fit_file_service.py`) e a
-  checagem de duplicatas no Garmin.
+- **Source:** intervals.icu instead of the MyWhoosh API, because of the one-session-per-account limit.
+  The MyWhoosh API client and the unused Zwift client were removed.
+- **Garmin login:** `garminconnect` 0.3.x, token-only, with MFA support. The old `garth`-based
+  flow no longer works.
+- **Credentials:** no passwords in `.env`. The key is stored in the system keyring.
+- **Sync:** uploads every new activity, not just the latest one. Uses `state.json`, pauses between
+  uploads, and stops when Garmin responds with 429.
+- **Windows:** scheduled task, notifications and log rotation.
+- Kept from the original: the FIT rewrite to Garmin Edge 840 (`fit_file_service.py`) and the
+  duplicate check on Garmin.
 
-## Licença e créditos
+## License and credits
 
-**GNU General Public License v3.0**, ver [LICENSE](LICENSE).
+**GNU General Public License v3.0**, see [LICENSE](LICENSE).
 
-- Projeto original: © Marcelo Rodrigo ([marcelorodrigo/mywhoosh-to-garmin](https://github.com/marcelorodrigo/mywhoosh-to-garmin)).
-- Modificações: © 2026 [m-diniz](https://github.com/m-diniz), sob a mesma licença.
-- Documentação comunitária da API: [mywhoosh-community/mywhoosh-api](https://github.com/mywhoosh-community/mywhoosh-api).
-- Bibliotecas: [python-garminconnect](https://github.com/cyberjunky/python-garminconnect), [fit-tool](https://pypi.org/project/fit-tool/), [keyring](https://pypi.org/project/keyring/).
+- Original project: © Marcelo Rodrigo ([marcelorodrigo/mywhoosh-to-garmin](https://github.com/marcelorodrigo/mywhoosh-to-garmin)).
+- Modifications: © 2026 [m-diniz](https://github.com/m-diniz), under the same license.
+- Community API documentation: [mywhoosh-community/mywhoosh-api](https://github.com/mywhoosh-community/mywhoosh-api).
+- Libraries: [python-garminconnect](https://github.com/cyberjunky/python-garminconnect), [fit-tool](https://pypi.org/project/fit-tool/), [keyring](https://pypi.org/project/keyring/).
 
-Projeto pessoal, sem vínculo com MyWhoosh, Garmin ou intervals.icu. Use por sua conta e risco.
+Personal project, not affiliated with MyWhoosh, Garmin or intervals.icu. Use at your own risk.
