@@ -60,6 +60,13 @@ venv\Scripts\python.exe main.py --list      # read-only view of intervals.icu + 
 ```
 `tests/test_smoke.py` compiles every entry point (catches syntax errors in files no test imports).
 
+## Dependencies
+
+Dependabot runs monthly, grouped (`.github/dependabot.yml`):
+- `github-actions` and `python-safe` → auto-merged (squash) by `.github/workflows/dependabot-automerge.yml` once the `Tests` check passes.
+- `python-sensitive` (`garminconnect`, `fit-tool`) → manual. Before merging, test with real data: Garmin token login (`scripts/login_garmin.py` with an existing token) and a FIT conversion of a real ride compared against the current version.
+- Merging on GitHub does not update the local install: `git pull` + `venv\Scripts\pip install -r requirements.txt`.
+
 ## Commits
 
 Conventional commits (`feat:`, `fix:`, `docs:`, `chore:`). `upstream` = marcelorodrigo/mywhoosh-to-garmin.

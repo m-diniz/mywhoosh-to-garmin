@@ -1,6 +1,12 @@
 version: 2
 
-# Mensal e agrupado: um PR por ecossistema por mês, em vez de vários por dia.
+# Mensal e agrupado: no máximo um PR por grupo por mês.
+#
+# Grupos e merge automático (ver .github/workflows/dependabot-automerge.yml):
+#   github-actions   -> automático (só afeta o CI)
+#   python-safe      -> automático, se o CI passar
+#   python-sensitive -> MANUAL: garminconnect (login/envio ao Garmin) e fit-tool
+#                       (regrava o FIT) precisam de teste com dados reais.
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -23,5 +29,12 @@ updates:
     allow:
       - dependency-type: "all"
     groups:
-      python:
+      python-sensitive:
+        patterns:
+          - "garminconnect"
+          - "fit-tool"
+      python-safe:
         patterns: ["*"]
+        exclude-patterns:
+          - "garminconnect"
+          - "fit-tool"
