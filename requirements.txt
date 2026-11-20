@@ -1,11 +1,11 @@
 requests==2.34.2
 # 0.3.x: login pelo fluxo SSO mobile atual do Garmin (o 0.2.x dependia do garth, descontinuado)
-garminconnect>=0.3.4,<0.4
-fit-tool==0.9.15
+garminconnect>=0.3.20,<0.4
+fit-tool==0.9.17
 python-dotenv==1.2.4
 # Senha do MyWhoosh no Windows Credential Manager (nunca no .env)
-keyring>=25
+keyring>=25.7.0
 
 # Testing dependencies
-pytest==9.1.1
+pytest==9.2.0
 pytest-cov==7.1.0
